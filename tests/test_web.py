@@ -54,6 +54,16 @@ class TestWeb(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertIn("กรุณากรอก".encode(), res.data)
 
+    def test_viewport_allows_zoom(self):
+        res = self.client.get("/")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b"user-scalable=yes", res.data)
+
+    def test_circuit_diagram_image_present(self):
+        res = self.client.get("/")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b"bjt-voltage-divider.svg", res.data)
+
 
 if __name__ == "__main__":
     unittest.main()

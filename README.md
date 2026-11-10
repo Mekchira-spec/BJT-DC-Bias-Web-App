@@ -18,16 +18,44 @@ requirements.txt        # Flask==3.1.3
 docs/                   # design note, validation, reflection, plan, checklist
 ```
 
-## ติดตั้งและรัน (Windows PowerShell)
+## เปิดแอปแบบดับเบิลคลิก (ง่ายที่สุด)
+
+**ดับเบิลคลิก `start.bat`** — จบ ไม่ต้องพิมพ์คำสั่งใด ๆ
+
+สิ่งที่เกิดขึ้น:
+1. หน้าต่าง console เปิดขึ้นและแสดงที่อยู่ เช่น `http://127.0.0.1:5000/`
+2. เบราว์เซอร์เด้งขึ้นเองพร้อมหน้าเว็บ
+3. ถ้า port 5000 ถูกใช้อยู่ จะเลื่อนไป 5001, 5002, ... ให้อัตโนมัติ
+
+> ปิดหน้าต่าง console = หยุดเว็บ (หน้าต่างนั้นคือตัวเซิร์ฟเวอร์)
+
+ถ้าขึ้น `[ERROR] .venv\Scripts\python.exe not found.` แปลว่ายังไม่ได้ติดตั้ง
+ให้ทำตามหัวข้อถัดไปก่อนหนึ่งครั้ง
+
+## ติดตั้งครั้งแรก (Windows PowerShell)
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-python -m flask --app app run --debug
 ```
 
-เปิดเบราว์เซอร์ที่ **http://127.0.0.1:5000/**
+> บนเครื่องที่ PowerShell บล็อกสคริปต์ (`running scripts is disabled`) ไม่ต้องใช้
+> `Activate.ps1` — เรียก `.venv\Scripts\python.exe` ตรง ๆ ได้เลย ซึ่งเป็นวิธีที่
+> `start.bat` ใช้อยู่แล้ว
+
+## รันแบบ manual (ทางเลือก)
+
+```powershell
+.\.venv\Scripts\python.exe -m flask --app app run --port 5000
+```
+
+หรือใช้ launcher ตัวเดียวกับที่ `start.bat` เรียก:
+
+```powershell
+.\.venv\Scripts\python.exe run.py
+```
+
+เปิดเบราว์เซอร์ที่ **http://127.0.0.1:5000/** (หรือ port ที่ console แจ้ง)
 
 > ต้องเปิดผ่าน Flask (localhost) เท่านั้น — การ double-click `templates/index.html`
 > จะไม่มีการคำนวณเพราะไม่มี Python อยู่เบื้องหลัง
