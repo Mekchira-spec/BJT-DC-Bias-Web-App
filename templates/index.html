@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BJT DC Bias Calculator</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main>
+  <header>
+    <h1>BJT DC Bias — Voltage Divider</h1>
+    <p class="lead">
+      คำนวณจุดทำงาน DC ของวงจร Common-Emitter (NPN) ด้วย Python ที่ทำงานฝั่ง Server
+      ภายใต้สมมติฐาน Forward-Active (β และ V<sub>BE</sub> คงที่)
+    </p>
+  </header>
+
+  {% if errors %}
+  <div class="alert alert-error">
+    <strong>กรุณากรอกข้อมูลให้ถูกต้องแล้วลองอีกครั้ง</strong>
+    <ul>
+      {% for field, message in errors.items() %}
+      <li><code>{{ field }}</code> — {{ message }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('calculate_route') }}">
+    <fieldset>
+      <legend>ค่าอุปกรณ์</legend>
+
+      <div class="grid">
+        <label>V<sub>CC</sub> (V)
+          <input type="text" inputmode="decimal" name="VCC" value="{{ form['VCC'] }}"
+                 class="{% if 'VCC' in errors %}invalid{% endif %}">
+        </label>
+
+        <label>R<sub>1</sub>
+          <input type="text" inputmode="decimal" name="R1" value="{{ form['R1'] }}"
+                 class="{% if 'R1' in errors %}invalid{% endif %}">
+        </label>
+
+        <label>R<sub>2</sub>
+          <input type="text" inputmode="decimal" name="R2" value="{{ form['R2'] }}"
+                 class="{% if 'R2' in errors %}invalid{% endif %}">
+        </label>
+
+        <label>R<sub>C</sub>
+          <input type="text" inputmode="decimal" name="RC" value="{{ form['RC'] }}"
+                 class="{% if 'RC' in errors %}invalid{% endif %}">
+        </label>
+
+        <label>R<sub>E</sub>
+          <input type="text" inputmode="decimal" name="RE" value="{{ form['RE'] }}"
+                 class="{% if 'RE' in errors %}invalid{% endif %}">
+        </label>
+
+        <label>β
+          <input type="text" inputmode="decimal" name="beta" value="{{ form['beta'] }}"
+                 class="{% if 'beta' in errors %}invalid{% endif %}">
+        </label>
+
+        <label>V<sub>BE</sub> (V)
+          <input type="text" inputmode="decimal" name="VBE" value="{{ form['VBE'] }}"
+                 class="{% if 'VBE' in errors %}invalid{% endif %}">
+        </label>
+
+        <label>หน่วยตัวต้านทาน
+          <select name="unit">
+            <option value="kohm" {% if unit == 'kohm' %}selected{% endif %}>kΩ</option>
+            <option value="ohm" {% if unit == 'ohm' %}selected{% endif %}>Ω</option>
+          </select>
+        </label>
+      </div>
+    </fieldset>
+
+    <button type="submit">Calculate DC Bias</button>
+  </form>
+
+  {% if result %}
+  <section class="results">
+    <h2>DC Bias Results</h2>
+
+    <p class="badge badge-{{ result.region|lower }}">{{ result.region }}</p>
+
+    {% if result.warnings %}
+    <div class="alert alert-warn">
+      {% for warning in result.warnings %}
+      <p>{{ warning }}</p>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="note">Forward-Active approximation ใช้ได้กับค่านี้</p>
+    {% endif %}
+
+    <table>
+      <caption>Intermediate values</caption>
+      <tbody>
+        <tr><th>V<sub>TH</sub></th><td>{{ "%.3f"|format(result.vth) }} V</td></tr>
+        <tr><th>R<sub>TH</sub></th><td>{{ "%.2f"|format(result.rth / 1000) }} kΩ</td></tr>
+      </tbody>
+    </table>
+
+    <table>
+      <caption>Operating point</caption>
+      <tbody>
+        <tr><th>I<sub>B</sub></th><td>{{ "%.2f"|format(result.ib * 1000000) }} µA</td></tr>
+        <tr><th>I<sub>C</sub></th><td>{{ "%.3f"|format(result.ic * 1000) }} mA</td></tr>
+        <tr><th>I<sub>E</sub></th><td>{{ "%.3f"|format(result.ie * 1000) }} mA</td></tr>
+        <tr><th>V<sub>B</sub></th><td>{{ "%.3f"|format(result.vb) }} V</td></tr>
+        <tr><th>V<sub>E</sub></th><td>{{ "%.3f"|format(result.ve) }} V</td></tr>
+        <tr><th>V<sub>C</sub></th><td>{{ "%.3f"|format(result.vc) }} V</td></tr>
+        <tr><th>V<sub>CE</sub></th><td>{{ "%.3f"|format(result.vce) }} V</td></tr>
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+</main>
+</body>
+</html>
