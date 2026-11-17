@@ -2,7 +2,7 @@
 
 import unittest
 
-from dc_bias import ValidationError, calculate, to_ohms
+from dc_bias import ValidationError, calculate, to_ohms, calculate_fixed_bias, calculate_emitter_bias
 
 
 class TestReferenceOperatingPoint(unittest.TestCase):
@@ -79,6 +79,81 @@ class TestRegions(unittest.TestCase):
     def test_active_has_no_warnings(self):
         r = calculate(12.0, 100_000.0, 22_000.0, 2_200.0, 1_000.0, 100.0, 0.70)
         self.assertEqual(r.warnings, [])
+
+
+class TestFixedBias(unittest.TestCase):
+    """Fixed Bias: VCC=12, RC=2.2k, RB=1M, beta=100, VBE=0.70.
+
+    IB = (VCC - VBE) / RB = 11.3 / 1e6 = 11.3 µA
+    IC = β·IB = 1.13 mA
+    VE = 0, VB = VBE = 0.70 V
+    VC = VCC - IC·RC = 12 - 1.13m·2200 = 9.514 V
+    VCE = VC - VE = 9.514 V
+    """
+
+    def test_fixed_basic_values(self):
+        r = calculate_fixed_bias(
+            vcc=12.0,
+            rc=2_200.0,
+            beta=100.0,
+            vbe=0.70,
+            rb=1_000_000.0,
+        )
+        self.assertAlmostEqual(r.ib, 11.3e-6, places=10)
+        self.assertAlmostEqual(r.ic, 1.13e-3, places=10)
+        self.assertAlmostEqual(r.ie, 1.1413e-3, places=10)
+        self.assertAlmostEqual(r.ve, 0.0, places=10)
+        self.assertAlmostEqual(r.vb, 0.70, places=10)
+        self.assertAlmostEqual(r.vc, 9.514, places=6)
+        self.assertAlmostEqual(r.vce, 9.514, places=6)
+        self.assertEqual(r.mode, "fixed")
+        self.assertEqual(r.region, "ACTIVE")
+
+    def test_fixed_rb_zero_rejected(self):
+        with self.assertRaises(ValidationError) as ctx:
+            calculate_fixed_bias(12.0, 2_200.0, 100.0, 0.70, 0.0)
+        self.assertIn("rb", ctx.exception.errors)
+
+
+class TestEmitterBias(unittest.TestCase):
+    """Emitter Bias: VCC=12, RC=2.2k, RB=1M, RE=1k, beta=100, VBE=0.70.
+
+    IB = (VCC - VBE) / (RB + (β+1)·RE) = 11.3 / 1,101,000 ≈ 10.2634 µA
+    IC = β·IB ≈ 1.02634 mA
+    IE = (β+1)·IB ≈ 1.03660 mA
+    VE = IE·RE ≈ 1.03660 V
+    VB = VE + VBE ≈ 1.73660 V
+    VC = VCC - IC·RC ≈ 9.74205 V
+    VCE = VC - VE ≈ 8.70545 V
+    """
+
+    def test_emitter_basic_values(self):
+        r = calculate_emitter_bias(
+            vcc=12.0,
+            rc=2_200.0,
+            beta=100.0,
+            vbe=0.70,
+            rb=1_000_000.0,
+            re=1_000.0,
+        )
+        self.assertAlmostEqual(r.ib, 11.3 / 1_101_000, places=10)
+        self.assertAlmostEqual(r.ic, 100.0 * 11.3 / 1_101_000, places=10)
+        self.assertAlmostEqual(r.ve, 101.0 * 11.3 / 1_101_000 * 1_000, places=6)
+        self.assertAlmostEqual(r.vb, r.ve + 0.70, places=6)
+        self.assertAlmostEqual(r.vc, 12.0 - 100.0 * 11.3 / 1_101_000 * 2_200, places=6)
+        self.assertAlmostEqual(r.vce, r.vc - r.ve, places=6)
+        self.assertEqual(r.mode, "emitter")
+        self.assertEqual(r.region, "ACTIVE")
+
+    def test_emitter_rb_zero_rejected(self):
+        with self.assertRaises(ValidationError) as ctx:
+            calculate_emitter_bias(12.0, 2_200.0, 100.0, 0.70, 0.0, 1_000.0)
+        self.assertIn("rb", ctx.exception.errors)
+
+    def test_emitter_re_zero_rejected(self):
+        with self.assertRaises(ValidationError) as ctx:
+            calculate_emitter_bias(12.0, 2_200.0, 100.0, 0.70, 1_000_000.0, 0.0)
+        self.assertIn("re", ctx.exception.errors)
 
 
 if __name__ == "__main__":

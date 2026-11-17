@@ -74,6 +74,39 @@ class TestWeb(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertIn(b'result-card', res.data)
 
+    def test_form_has_mode_selector(self):
+        res = self.client.get("/")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b'name="mode"', res.data)
+        self.assertIn(b"Voltage Divider", res.data)
+        self.assertIn(b"Fixed Bias", res.data)
+        self.assertIn(b"Emitter Bias", res.data)
+
+    def test_form_has_rb_field(self):
+        res = self.client.get("/")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b'name="RB"', res.data)
+
+    def test_post_fixed_bias_returns_results(self):
+        data = dict(VALID_FORM, mode="fixed", RB="1000")
+        res = self.client.post("/calculate", data=data)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b"9.514", res.data)  # VCE ≈ 9.514 V
+        self.assertIn(b"ACTIVE", res.data)
+
+    def test_post_emitter_bias_returns_results(self):
+        data = dict(VALID_FORM, mode="emitter", RB="1000")
+        res = self.client.post("/calculate", data=data)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b"8.705", res.data)  # VCE ≈ 8.705 V
+        self.assertIn(b"ACTIVE", res.data)
+
+    def test_post_fixed_bias_missing_rb_shows_error(self):
+        data = dict(VALID_FORM, mode="fixed", RB="")
+        res = self.client.post("/calculate", data=data)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("กรุณากรอก".encode(), res.data)
+
 
 if __name__ == "__main__":
     unittest.main()

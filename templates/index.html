@@ -9,7 +9,7 @@
 <body>
 <main>
   <header>
-    <h1>BJT DC Bias — Voltage Divider</h1>
+    <h1>BJT DC Bias — {{ mode_names[mode] }}</h1>
     <p class="lead">
       คำนวณจุดทำงาน DC ของวงจร Common-Emitter (NPN) ด้วย Python ที่ทำงานฝั่ง Server
       ภายใต้สมมติฐาน Forward-Active (β และ V<sub>BE</sub> คงที่)
@@ -36,6 +36,17 @@
       <legend>ค่าอุปกรณ์</legend>
 
       <div class="grid">
+        <label>โหมดวงจร
+          <select name="mode" class="form-input">
+            <option value="divider" {% if mode == 'divider' %}selected{% endif %}>Voltage Divider</option>
+            <option value="fixed" {% if mode == 'fixed' %}selected{% endif %}>Fixed Bias</option>
+            <option value="emitter" {% if mode == 'emitter' %}selected{% endif %}>Emitter Bias</option>
+          </select>
+          <p class="note" style="margin-top: 6px; font-size: 0.85rem;">
+            {% if mode == 'divider' %}ใช้ R₁, R₂, R<sub>C</sub>, R<sub>E</sub>{% elif mode == 'fixed' %}ใช้ R<sub>B</sub>, R<sub>C</sub>{% else %}ใช้ R<sub>B</sub>, R<sub>C</sub>, R<sub>E</sub>{% endif %}
+          </p>
+        </label>
+
         <label>V<sub>CC</sub> (V)
           <input type="text" inputmode="decimal" name="VCC" value="{{ form['VCC'] }}"
                  class="form-input {% if 'VCC' in errors %}invalid{% endif %}">
@@ -59,6 +70,11 @@
         <label>R<sub>E</sub>
           <input type="text" inputmode="decimal" name="RE" value="{{ form['RE'] }}"
                  class="form-input {% if 'RE' in errors %}invalid{% endif %}">
+        </label>
+
+        <label>R<sub>B</sub>
+          <input type="text" inputmode="decimal" name="RB" value="{{ form['RB'] }}"
+                 class="form-input {% if 'RB' in errors %}invalid{% endif %}">
         </label>
 
         <label>β
@@ -85,7 +101,7 @@
 
   {% if result %}
   <section class="results">
-    <h2>DC Bias Results</h2>
+    <h2>DC Bias Results — {{ mode_names[mode] }}</h2>
 
     <p class="badge badge-{{ result.region|lower }}">{{ result.region }}</p>
 
@@ -100,6 +116,7 @@
     {% endif %}
 
     <div class="result-group">
+      {% if mode == 'divider' %}
       <div class="result-card">
         <h3>ค่ากลางตัวแบ่ง</h3>
         <table>
@@ -109,6 +126,7 @@
           </tbody>
         </table>
       </div>
+      {% endif %}
 
       <div class="result-card">
         <h3>จุดทำงาน (Operating Point)</h3>
