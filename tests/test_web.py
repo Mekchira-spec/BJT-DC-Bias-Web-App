@@ -64,6 +64,16 @@ class TestWeb(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertIn(b"bjt-voltage-divider.svg", res.data)
 
+    def test_form_has_styled_inputs(self):
+        res = self.client.get("/")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b'class="form-input"', res.data)
+
+    def test_results_section_has_result_cards(self):
+        res = self.client.post("/calculate", data=VALID_FORM)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b'result-card', res.data)
+
 
 if __name__ == "__main__":
     unittest.main()
