@@ -2,7 +2,15 @@
 
 import unittest
 
-from dc_bias import ValidationError, calculate, to_ohms, calculate_fixed_bias, calculate_emitter_bias
+from dc_bias import (
+    ValidationError,
+    calculate,
+    calculate_emitter_bias,
+    calculate_fixed_bias,
+    current_from_voltage_drop,
+    region_from_vce,
+    to_ohms,
+)
 
 
 class TestReferenceOperatingPoint(unittest.TestCase):
@@ -154,6 +162,19 @@ class TestEmitterBias(unittest.TestCase):
         with self.assertRaises(ValidationError) as ctx:
             calculate_emitter_bias(12.0, 2_200.0, 100.0, 0.70, 1_000_000.0, 0.0)
         self.assertIn("re", ctx.exception.errors)
+
+
+class TestReadOnlyHelpers(unittest.TestCase):
+    def test_current_from_voltage_drop(self):
+        self.assertAlmostEqual(current_from_voltage_drop(12.0, 9.4388412, 2_200.0) * 1000, 1.1642, places=3)
+
+    def test_current_from_voltage_drop_rejects_zero_resistance(self):
+        with self.assertRaises(ValidationError):
+            current_from_voltage_drop(12.0, 9.0, 0.0)
+
+    def test_region_from_vce(self):
+        self.assertEqual(region_from_vce(8.2), "ACTIVE")
+        self.assertEqual(region_from_vce(0.2), "SATURATION")
 
 
 if __name__ == "__main__":

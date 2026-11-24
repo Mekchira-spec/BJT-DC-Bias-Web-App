@@ -207,6 +207,72 @@ select.form-input {
 .badge-active { background: var(--ok); }
 .badge-saturation { background: var(--warn); }
 .badge-cutoff { background: var(--bad); }
+.badge-success { background: var(--accent); }
+
+/* ---------- Lab 4: sections, charts, evidence ---------- */
+form fieldset + fieldset {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.chart {
+  margin: 0 0 20px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+}
+
+.chart figcaption {
+  font-weight: 700;
+  color: var(--accent-dark);
+  margin-bottom: 8px;
+}
+
+.chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: #fbfdff;
+  border-radius: 8px;
+}
+
+.chart .grid { stroke: #e2e8f0; stroke-width: 1; }
+.chart .axis { stroke: #94a3b8; stroke-width: 1.5; }
+.chart .tick { fill: #64748b; font-size: 11px; }
+.chart .axis-label { fill: #475569; font-size: 12px; font-weight: 600; }
+
+.chart .legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 10px 0 0;
+  padding: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.chart .legend li { display: flex; align-items: center; gap: 6px; }
+.swatch { width: 14px; height: 4px; border-radius: 2px; display: inline-block; }
+
+.evidence {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  margin-top: 20px;
+}
+
+.evidence summary { cursor: pointer; font-weight: 700; color: var(--muted); }
+.evidence pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 14px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
 
 /* ---------- Result cards ---------- */
 .result-group {

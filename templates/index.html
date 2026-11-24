@@ -3,16 +3,44 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
-  <title>BJT DC Bias Calculator</title>
+  <title>BJT Amplifier Simulator — Lab 04</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+{% macro chart(c) %}
+<figure class="chart">
+  <figcaption>{{ c.title }}</figcaption>
+  <svg viewBox="0 0 {{ c.view_w }} {{ c.view_h }}" role="img" aria-label="{{ c.title }}">
+    {% for t in c.xticks %}
+    <line x1="{{ t.x }}" y1="{{ c.plot.top }}" x2="{{ t.x }}" y2="{{ c.plot.bottom }}" class="grid"/>
+    <text x="{{ t.x }}" y="{{ c.plot.bottom + 16 }}" text-anchor="middle" class="tick">{{ t.label }}</text>
+    {% endfor %}
+    {% for t in c.yticks %}
+    <line x1="{{ c.plot.left }}" y1="{{ t.y }}" x2="{{ c.plot.right }}" y2="{{ t.y }}" class="grid"/>
+    <text x="{{ c.plot.left - 7 }}" y="{{ t.y + 4 }}" text-anchor="end" class="tick">{{ t.label }}</text>
+    {% endfor %}
+    <line x1="{{ c.plot.left }}" y1="{{ c.plot.top }}" x2="{{ c.plot.left }}" y2="{{ c.plot.bottom }}" class="axis"/>
+    <line x1="{{ c.plot.left }}" y1="{{ c.plot.bottom }}" x2="{{ c.plot.right }}" y2="{{ c.plot.bottom }}" class="axis"/>
+    {% for p in c.polylines %}
+    <polyline points="{{ p.points }}" fill="none" stroke="{{ p.color }}" stroke-width="2" stroke-linejoin="round"/>
+    {% endfor %}
+    <text x="{{ (c.plot.left + c.plot.right) / 2 }}" y="{{ c.view_h - 4 }}" text-anchor="middle" class="axis-label">{{ c.xlabel }}</text>
+    <text x="12" y="{{ (c.plot.top + c.plot.bottom) / 2 }}" text-anchor="middle" class="axis-label" transform="rotate(-90 12 {{ (c.plot.top + c.plot.bottom) / 2 }})">{{ c.ylabel }}</text>
+  </svg>
+  <ul class="legend">
+    {% for p in c.polylines %}
+    <li><span class="swatch" style="background:{{ p.color }}"></span>{{ p.name }}</li>
+    {% endfor %}
+  </ul>
+</figure>
+{% endmacro %}
+
 <main>
   <header>
-    <h1>BJT DC Bias — {{ mode_names[mode] }}</h1>
+    <h1>BJT Amplifier Simulator — {{ analysis_names[analysis] }}</h1>
     <p class="lead">
-      คำนวณจุดทำงาน DC ของวงจร Common-Emitter (NPN) ด้วย Python ที่ทำงานฝั่ง Server
-      ภายใต้สมมติฐาน Forward-Active (β และ V<sub>BE</sub> คงที่)
+      ต่อยอด Lab 3: คำนวณ DC Bias แบบเดิมได้ และจำลอง Common-Emitter ด้วย ngspice จริง
+      (DC .op · AC .ac · Transient .tran) พร้อมกราฟจากผลที่อ่านจาก simulator
     </p>
   </header>
 
@@ -27,16 +55,40 @@
   </div>
   {% endif %}
 
+  {% if spice_error %}
+  <div class="alert alert-error">
+    <strong>การจำลองไม่สำเร็จ — ไม่มีกราฟหรือค่าที่นำเสนอ</strong>
+    <p>{{ spice_error }}</p>
+    <p class="note">ตรวจว่า ngspice อยู่ใน PATH หรือตั้งค่าตัวแปร NGSPICE แล้วลองใหม่</p>
+  </div>
+  {% endif %}
+
   <img src="{{ url_for('static', filename='images/bjt-voltage-divider.svg') }}"
        alt="วงจร BJT Voltage-Divider Bias"
        class="circuit">
 
   <form method="post" action="{{ url_for('calculate_route') }}">
     <fieldset>
+      <legend>การวิเคราะห์</legend>
+      <div class="grid">
+        <label>โหมดการทำงาน
+          <select name="analysis" class="form-input">
+            {% for key, label in analysis_names.items() %}
+            <option value="{{ key }}" {% if analysis == key %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <p class="note" style="margin-top: 6px; font-size: 0.85rem;">
+            {% if analysis == 'analytical' %}ใช้สมการ Forward-Active จาก Lab 3 (ไม่เรียก ngspice){% else %}เรียก ngspice จริง — ผลมีป้ายกำกับว่า SPICE{% endif %}
+          </p>
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset>
       <legend>ค่าอุปกรณ์</legend>
 
       <div class="grid">
-        <label>โหมดวงจร
+        <label>โหมดวงจร (Analytical)
           <select name="mode" class="form-input">
             <option value="divider" {% if mode == 'divider' %}selected{% endif %}>Voltage Divider</option>
             <option value="fixed" {% if mode == 'fixed' %}selected{% endif %}>Fixed Bias</option>
@@ -96,7 +148,48 @@
       </div>
     </fieldset>
 
-    <button type="submit" class="btn btn-primary">Calculate DC Bias</button>
+    <fieldset>
+      <legend>วงจร SPICE (Voltage Divider CE)</legend>
+      <p class="note">ใช้เฉพาะโหมด DC / AC / Transient — ไม่มี emitter bypass capacitor ในรุ่นนี้</p>
+      <div class="grid">
+        <label>R<sub>L</sub>
+          <input type="text" inputmode="decimal" name="RL" value="{{ form['RL'] }}"
+                 class="form-input {% if 'RL' in errors %}invalid{% endif %}">
+        </label>
+        <label>C<sub>in</sub> (µF)
+          <input type="text" inputmode="decimal" name="Cin" value="{{ form['Cin'] }}"
+                 class="form-input {% if 'Cin' in errors %}invalid{% endif %}">
+        </label>
+        <label>C<sub>out</sub> (µF)
+          <input type="text" inputmode="decimal" name="Cout" value="{{ form['Cout'] }}"
+                 class="form-input {% if 'Cout' in errors %}invalid{% endif %}">
+        </label>
+        <label>Vin amplitude (mV peak)
+          <input type="text" inputmode="decimal" name="source_amp" value="{{ form['source_amp'] }}"
+                 class="form-input {% if 'source_amp' in errors %}invalid{% endif %}">
+        </label>
+        <label>Vin frequency (kHz)
+          <input type="text" inputmode="decimal" name="source_freq" value="{{ form['source_freq'] }}"
+                 class="form-input {% if 'source_freq' in errors %}invalid{% endif %}">
+        </label>
+        <label>AC f<sub>min</sub> (Hz)
+          <input type="text" inputmode="decimal" name="ac_fmin" value="{{ form['ac_fmin'] }}"
+                 class="form-input {% if 'ac_fmin' in errors %}invalid{% endif %}">
+        </label>
+        <label>AC f<sub>max</sub> (MHz)
+          <input type="text" inputmode="decimal" name="ac_fmax" value="{{ form['ac_fmax'] }}"
+                 class="form-input {% if 'ac_fmax' in errors %}invalid{% endif %}">
+        </label>
+        <label>Transient stop (ms)
+          <input type="text" inputmode="decimal" name="tran_stop" value="{{ form['tran_stop'] }}"
+                 class="form-input {% if 'tran_stop' in errors %}invalid{% endif %}">
+        </label>
+      </div>
+    </fieldset>
+
+    <button type="submit" class="btn btn-primary">
+      {% if analysis == 'analytical' %}Calculate DC Bias{% else %}Run SPICE simulation{% endif %}
+    </button>
   </form>
 
   {% if result %}
@@ -104,6 +197,7 @@
     <h2>DC Bias Results — {{ mode_names[mode] }}</h2>
 
     <p class="badge badge-{{ result.region|lower }}">{{ result.region }}</p>
+    <p class="note">ที่มา: Analytical (Python) · β และ VBE คงที่</p>
 
     {% if result.warnings %}
     <div class="alert alert-warn">
@@ -143,6 +237,46 @@
         </table>
       </div>
     </div>
+  </section>
+  {% endif %}
+
+  {% if sim %}
+  <section class="results">
+    <h2>Simulation Results — {{ sim.label }}</h2>
+    <p class="badge badge-success">{{ sim.source }} · {{ sim.badge }} · {{ sim.version }}</p>
+    <p class="note">{{ sim.note }}</p>
+
+    {% if sim.warnings %}
+    <div class="alert alert-warn">
+      {% for warning in sim.warnings %}<p>{{ warning }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="result-group">
+      <div class="result-card">
+        <h3>ค่าจาก ngspice</h3>
+        <table>
+          <tbody>
+            {% for label, value in sim.stats %}
+            <tr><th>{{ label }}</th><td>{{ value }}</td></tr>
+            {% endfor %}
+            <tr><th>Points</th><td>{{ sim.points }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% for c in sim.charts %}
+    {{ chart(c) }}
+    {% endfor %}
+
+    <details class="evidence">
+      <summary>หลักฐานการรัน (netlist / log tail)</summary>
+      <h3>Netlist</h3>
+      <pre>{{ sim.netlist }}</pre>
+      <h3>ngspice log (ท้าย)</h3>
+      <pre>{{ sim.log_tail }}</pre>
+    </details>
   </section>
   {% endif %}
 </main>

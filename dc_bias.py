@@ -62,6 +62,22 @@ def to_ohms(value: float, unit: str) -> float:
     raise ValueError(f"unknown resistance unit: {unit!r}")
 
 
+def current_from_voltage_drop(v_high: float, v_low: float, ohms: float) -> float:
+    """Ohm's law used to read a current back from measured node voltages.
+
+    Shared by the teaching model and the SPICE read-out so that the physics
+    stays in this module (see ``AGENTS.md``).
+    """
+    if ohms <= 0 or not math.isfinite(ohms):
+        raise ValidationError({"ohms": "ความต้านทานต้องมากกว่า 0"})
+    return (v_high - v_low) / ohms
+
+
+def region_from_vce(vce: float) -> str:
+    """Classify an operating point from VCE using the teaching threshold."""
+    return REGION_SATURATION if vce < VCE_SAT else REGION_ACTIVE
+
+
 def _validate(
     vcc: float,
     r1: float,
