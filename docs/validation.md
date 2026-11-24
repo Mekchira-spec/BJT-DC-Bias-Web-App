@@ -92,6 +92,7 @@ python -m flask --app app run --debug
 3. **กราฟมาจาก raw file จริง** — `spice_engine.parse_raw()` อ่าน `run.raw` ที่ ngspice เขียน; `charts.py` คำนวณพิกัด SVG จาก array นั้นฝั่ง server ไม่มี JavaScript และไม่มีข้อมูลตัวอย่างฝังใน template
 4. **เครื่องมือตรวจรับไม่ตรงตามใบงาน 100%** — ไม่มี Playwright MCP และ Impeccable skill ในสภาพแวดล้อมนี้ จึงใช้ in-app browser ของ OpenCode + ปรับ CSS ด้วยตนเอง และระบุตรงไปตรงมาว่าไม่มีหลักฐานจาก skill ดังกล่าว
 5. **Screenshot ไม่ได้พิสูจน์ค่าทางวิศวกรรม** — ตัวเลขในตารางอ่านจาก DOM/netlist/log ที่ browser แสดงจริง มี screenshot เป็นหลักฐานประกอบเท่านั้น
+6. **แผนภาพวงจรใน evidence ถูกอัปเดตให้ครบ** — `static/images/bjt-voltage-divider.svg` แสดง `+VCC, GND, Vin, Cin, R1, R2, Base, RC, Q1, Collector, Emitter, RE, Cout, Vout, RL` และต่อเชื่อมถูกต้องตาม Common-Emitter; ตรวจจาก `<text>` ใน SVG ที่ browser โหลดจริง แล้วถ่าย screenshot ใหม่แทนของเดิม (ยังเป็น UI เดิม ไม่ใช่ภาพ generating ภายนอก)
 
 ## วิธีทำซ้ำ Lab 04
 
