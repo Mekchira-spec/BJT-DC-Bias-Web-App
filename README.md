@@ -15,12 +15,13 @@ Flask Web Application สำหรับคำนวณ **DC Operating Point** �
 |---|---|
 | GitHub repository | https://github.com/Mekchira-spec/BJT-DC-Bias-Web-App.git |
 | Branch | `main` |
-| Commit ของโค้ด Lab 04 | `b6cf391` — `feat: integrate ngspice DC/AC/transient simulator (Lab 04)` |
+| Commit ของโค้ด Lab 04 | `b6cf3914084944935d8b7456f6c4db08c78a02d6` — `feat: integrate ngspice DC/AC/transient simulator (Lab 04)` |
+| Commit หลักฐาน/เอกสารล่าสุด | `c16ceb6c4037050b97d64db6686f64ea0b8ddad1` — `fix: capture full 390x4342 phone UI evidence` |
 | Commit ก่อนหน้า | `17b797d` |
 | หลักฐานตรวจรับ B1–B8 | [`docs/validation.md`](docs/validation.md) |
-| ภาพประกอบ | [`docs/captures/`](docs/captures/) |
+| ภาพประกอบ | [`docs/captures/`](docs/captures/) — `B8_desktop.jpeg`, `B8_phone_390px.jpeg` (390×4342 px) |
 
-> เอกสาร/ภาพหลักฐานที่เพิ่มหลัง commit `b6cf391` จะอยู่ใน commit ถัดไปบน `main` — ดู commit SHA ล่าสุดได้จากหน้า Community/Commits ของ repo หรือจากคำตอบที่แนบร่วมส่งงาน
+> README นี้เป็นของ **Lab 04** แล้ว (Lab 03 ยังคงไว้เป็น regression) — โค้ด/เอกสาร/ภาพหลักฐานทั้งหมดถูก commit และ push ขึ้น `main` แล้ว ไม่มีสิ่งที่ค้างในเครื่อง
 
 ## Dependencies / สิ่งที่ต้องมี
 
